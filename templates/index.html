@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gateoeterno</title>
+    <!-- Un chatbot para compartir información sobre algo -->
+    <link rel="stylesheet" href="static/style.css" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <div class="module">
+    <!-- Barra de búsqueda -->
+    <input type="text" id="search" placeholder="Buscar..." />
+    <!-- Lista de resultados -->
+    <table id="results"></table>
+  </div>
+  <div class="module">
+    <!-- Selección de artículos -->
+    <table id="selection"></table>
+    <!-- Botón de Agregar a stock -->
+    <button id="add">Agregar a stock</button>
+    <!-- Botón de Registrar venta -->
+    <button id="sell">Registrar venta</button>
+    <!-- Botón de Borrar selección -->
+    <button id="clear">Borrar selección</button>
+  </div>
+  <div class="module">
+    <!-- Botón de Subir factura (jpg, png, jpeg)-->
+    <input type="file" id="upload" accept="image/*" />
+    <!-- Botón de Historial-->
+    <button id="history">Historial</button>
+    <!-- Botón de agregar a stock manual-->
+    <button id="manual">Agregar a stock</button>
+    <!-- Botón de aumentar precios -->
+    <button id="increase">Aumentar precios</button>
+  </div>
+  <div class="module">
+    <!-- Log -->
+    <ul id="log"></ul>
+  </div>
+  <div class="module">
+    <!-- Listado de stock -->
+    <table id="stock"></table>
+  </div>
+
+  <script type="text/javascript">
+    /*  let selection = [];
+    let stock = [] */
+
+    // Fill table
+    function fillTable(tableName) {
+      getFromServer(tableName).then((data) => {
+        // clear the selection table
+        document.getElementById(tableName).innerHTML = "";
+        let properties = [];
+        // For each item in the selection array, store the properties in an array called properties (don't repeat properties)
+        for (let i = 0; i < data.length; i++) {
+          for (let property in data[i]) {
+            if (properties.indexOf(property) == -1) {
+              properties.push(property);
+            }
+          }
+        }
+        // Create the table header
+        let table = document.getElementById(tableName);
+        let header = table.createTHead();
+        let row = header.insertRow(0);
+        for (let i = 0; i < properties.length; i++) {
+          let cell = row.insertCell(i);
+          cell.innerHTML = properties[i];
+        }
+        // Create the table body
+        let body = table.createTBody();
+        for (let i = 0; i < data.length; i++) {
+          let row = body.insertRow(i);
+          for (let j = 0; j < properties.length; j++) {
+            let cell = row.insertCell(j);
+            // if property undefined, set cell to empty string
+            if (data[i][properties[j]] == undefined) {
+              cell.innerHTML = "";
+            } else {
+              // if property is true/false, set cell to checkbox
+              if (data[i][properties[j]] === true) {
+                cell.innerHTML = '<input type="checkbox" checked>';
+              } else if (data[i][properties[j]] === false) {
+                cell.innerHTML = '<input type="checkbox">';
+              } else {
+                // otherwise, set cell to property value
+                cell.innerHTML = data[i][properties[j]];
+              }
+            }
+          }
+        }
+      });
+    }
+
+    fillTable("selection");
+    fillTable("stock");
+
+    function logAction(action) {
+      // log the action in the log ul. max 5 logs
+      let log = document.getElementById("log");
+      let li = document.createElement("li");
+      li.innerHTML = action;
+      log.appendChild(li);
+      if (log.childElementCount > 5) {
+        log.removeChild(log.childNodes[0]);
+      }
+    }
+
+    // When user adds a file, upload it to the server
+    document.getElementById("upload").addEventListener("change", function () {
+      logAction("Subiendo imagen");
+      // check if the file is an image
+      if (!this.files[0].type.match(/image.*/)) {
+        alert("No es una imagen");
+        return;
+      }
+      // upload the image to the server
+      let formData = new FormData();
+      formData.append("file", this.files[0]);
+      fetch("/upload_image", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((json) => {
+          //print the response
+          if (json["status"] == "success") {
+            logAction("Imagen subida");
+            console.log(json["items"]);
+          } else {
+            logAction("Error al subir imagen");
+          }
+        });
+    });
+
+    // When user clicks on the add button, add the selected items to the stock
+    document.getElementById("add").addEventListener("click", function () {
+      // check if selection is empty
+      if (selection.length == 0) {
+        logAction("No hay artículos seleccionados");
+        return;
+      }
+      fetch("/add_to_stock", {
+        method: "POST",
+      })
+        .then((response) => response.json())
+        .then((json) => {
+          //print the response
+          if (json["status"] == "success") {
+            logAction("Artículos agregados al stock");
+          } else {
+            logAction("Error al agregar artículos al stock");
+          }
+          // clear the selection
+          selection = [];
+          // clear the selection table
+          document.getElementById("selection").innerHTML = "";
+        });
+
+      // clear the selection
+      selection = [];
+      // clear the selection table
+      document.getElementById("selection").innerHTML = "";
+    });
+
+    // if the user is typing in the search bar and presses enter, check if the text is a valid ISBN
+    document
+      .getElementById("search")
+      .addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.keyCode === 13) {
+          // if the text is a valid ISBN, add it to the selection
+          if (isValidISBN(document.getElementById("search").value)) {
+            createBookFromIsbn(document.getElementById("search").value).then(
+              (new_book) => {
+                console.log(new_book);
+                addBookToSelection(new_book);
+              }
+            );
+          } else {
+            alert("ISBN inválido");
+            // TODO handle invalid ISBN
+          }
+          // clear the search bar
+          document.getElementById("search").value = "";
+        }
+      });
+
+    // When the user clicks on a td, make it editable
+    document.addEventListener("click", function (e) {
+      if (e.target && e.target.nodeName == "TD") {
+        e.target.contentEditable = true;
+        e.target.focus();
+      }
+    });
+
+    function createBookFromIsbn(isbn) {
+      new_book = {};
+      new_book["isbn"] = isbn;
+      // route /get_details_by_isbn returns an object with  'Title', 'Authors', Publishers' and 'Publish Date'. add those to the object
+      return fetch("/get_details_by_isbn/" + isbn)
+        .then((response) => response.json())
+        .then((json) => {
+          new_book["cantidad"] = 1;
+          new_book["titulo"] = json["Title"];
+          new_book["autor"] = json["Authors"];
+          new_book["editorial"] = json["Publishers"];
+          new_book["fecha"] = json["Publish Date"];
+          new_book["precio"] = 0;
+          new_book["consignacion"] = "no";
+          return new_book;
+        });
+    }
+
+    // Add book to selection
+    function addBookToSelection(book) {
+      // check if selection is empty
+      if (selection.length == 0) {
+        selection.push(book);
+      } else {
+        // check if the ISBN is already in the selection
+        let alreadyInSelection = false;
+        for (let i = 0; i < selection.length; i++) {
+          if (selection[i]["isbn"] == book["isbn"]) {
+            alreadyInSelection = true;
+            selection[i]["cantidad"]++;
+          }
+        }
+        // if the ISBN is not already in the selection, add it
+        if (!alreadyInSelection) {
+          selection.push(book);
+        }
+      }
+      addSelectionToServer();
+      fillSelectionTable();
+    }
+    /* 
+    // Get selection from server
+    function getSelectionFromServer() {
+      fetch("/get_selection")
+        .then((response) => response.json())
+        .then((json) => {
+          selection = json;
+          fillSelectionTable();
+        });
+    }
+ */
+    // Get data from server
+    function getFromServer(dataName, data) {
+      return fetch("/get_" + dataName)
+        .then((response) => response.json())
+        .then((json) => {
+          console.log(json);
+          return json;
+        });
+    }
+
+    // Add selection to server
+    function addSelectionToServer() {
+      fetch("/add_selection", {
+        method: "POST",
+        body: JSON.stringify(selection),
+      });
+    }
+
+    /*   // Fill selection table
+    function fillSelectionTable() {
+      // clear the selection table
+      document.getElementById("selection").innerHTML = "";
+      let properties = [];
+      // For each item in the selection array, store the properties in an array called properties (don't repeat properties)
+      for (let i = 0; i < selection.length; i++) {
+        for (let property in selection[i]) {
+          if (properties.indexOf(property) == -1) {
+            properties.push(property);
+          }
+        }
+      }
+      // Create the table header
+      let table = document.getElementById("selection");
+      let header = table.createTHead();
+      let row = header.insertRow(0);
+      for (let i = 0; i < properties.length; i++) {
+        let cell = row.insertCell(i);
+        cell.innerHTML = properties[i];
+      }
+      // Create the table body
+      let body = table.createTBody();
+      for (let i = 0; i < selection.length; i++) {
+        let row = body.insertRow(i);
+        for (let j = 0; j < properties.length; j++) {
+          let cell = row.insertCell(j);
+          // if property undefined, set cell to empty string
+          if (selection[i][properties[j]] == undefined) {
+            cell.innerHTML = "";
+          } else {
+            // if property is true/false, set cell to checkbox
+            if (selection[i][properties[j]] === true) {
+              cell.innerHTML = '<input type="checkbox" checked>';
+            } else if (selection[i][properties[j]] === false) {
+              cell.innerHTML = '<input type="checkbox">';
+            } else {
+              // otherwise, set cell to property value
+            cell.innerHTML = selection[i][properties[j]];
+          }
+        }
+      }
+    }
+  }
+ */
+    // Check if a string is a valid ISBN
+    function isValidISBN(isbn) {
+      // remove all non-digit characters
+      isbn = isbn.replace(/\D/g, "");
+      // if the string is not 10 or 13 characters long, it's not a valid ISBN
+      if (isbn.length != 10 && isbn.length != 13) {
+        return false;
+      }
+      // if the string is 10 characters long, it must be a valid ISBN-10
+      if (isbn.length == 10) {
+        // calculate the check digit
+        var sum = 0;
+        for (var i = 0; i < 9; i++) {
+          sum += parseInt(isbn[i]) * (10 - i);
+        }
+        var check = (11 - (sum % 11)) % 11;
+        // if the check digit is 10, it must be an X
+        if (check == 10) {
+          return isbn[9] == "X";
+        }
+        // otherwise, it must be a digit
+        return isbn[9] == check;
+      }
+      // if the string is 13 characters long, it must be a valid ISBN-13
+      if (isbn.length == 13) {
+        // calculate the check digit
+        var sum = 0;
+        for (var i = 0; i < 12; i++) {
+          sum += parseInt(isbn[i]) * (i % 2 == 0 ? 1 : 3);
+        }
+        var check = (10 - (sum % 10)) % 10;
+        // the check digit must be a digit
+        return isbn[12] == check;
+      }
+    }
+    /* 
+    getSelectionFromServer(); */
+  </script>
+
+  <style>
+    .module {
+      background-color: #eff2f7;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px;
+    }
+  </style>
+</html>
