@@ -19,28 +19,60 @@ import pytesseract
 
 app = Flask(__name__)
 
-
+# Show index.html
 @app.route('/', methods=['GET'])
 def index():
 
     return render_template('index.html')
 
-@app.route('/add_selection', methods=['POST'])
-def add_selection():
+# Add data to json file
+@app.route('/add_<dataName>', methods=['POST'])
+def add_selection(dataName):
     try:
-        selection = request.get_json(force=True)
-        with open('selection.json', 'w', encoding='utf-8') as f:
-            json.dump(selection, f)
+        data = request.get_json(force=True)
+        with open(dataName+'.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f)
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)})
 
+# Get data from json file
 @app.route('/get_<data>', methods=['GET'])
 def get_data(data):
     with open(data+'.json', 'r', encoding='utf-8') as f:
         data = f.read()
     return data
 
+# Update data to json file
+@app.route('/update_<dataName>/<idName>/<id>/<property>/<value>', methods=['POST'])
+def update_data(dataName, idName,id, property, value):
+    try:
+        # Read the data
+        with open(dataName+'.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        # Find the book in the data based on ISBN
+        found = next((b for b in data if b[idName] == id), None)
+
+        if found:
+            found[property] = value
+        else:
+            return jsonify({'status': 'error', 'error': 'Book not found in the data.'})
+
+        # Write the updated data back to json file
+        with open(dataName+'.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+    
+# Empty data from json file
+@app.route('/empty_<dataName>', methods=['POST'])
+def empty_data(dataName):
+    with open(dataName+'.json', 'w', encoding='utf-8') as f:
+        json.dump([], f)
+    return jsonify({'status': 'success'})
 
 @app.route('/add_to_stock', methods=['POST'])
 def add_to_stock():
@@ -78,49 +110,69 @@ def add_to_stock():
         print(e)
         return jsonify({'status': 'error', 'error': str(e)})
 
+# Upload image to server
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
-    if 'file' not in request.files:
-        return jsonify({'status': 'error', 'message': 'No file part in the request.'}), 400
-    image = request.files['file']
-    
-    # Check if the file is empty
-    if image.filename == '':
-        return jsonify({'status': 'error', 'message': 'No selected file.'}), 400
-    
-    image_path = 'image.jpeg'
-    image.save(image_path)
-    
-    extracted_text = ocr_image(image_path)
-    items = extract_details(extracted_text)
-    
-    return jsonify({'status': 'success', 'items': items})
+    try:
+        if 'file' not in request.files:
+            return jsonify({'status': 'error', 'message': 'No file part in the request.'}), 400
+        image = request.files['file']
+        
+        # Check if the file is empty
+        if image.filename == '':
+            return jsonify({'status': 'error', 'message': 'No selected file.'}), 400
+        
+        image_path = 'image.jpeg'
+        image.save(image_path)
+        
+        extracted_text = ocr_image(image_path)
+        items_json = extract_details(extracted_text)
+        # for each item, add the property "consignacion" as false
+        for item in items_json:
+            item['consignacion'] = False
+ 
+        # replace selection.json with items_json
+        with open('selection.json', 'w', encoding='utf-8') as f:
+            json.dump(items_json, f, ensure_ascii=False, indent=4)
+        return jsonify({'status': 'success', 'message': 'Image uploaded successfully.'})
+    except Exception as e:
+        print(e)
+        return jsonify({'status': 'error', 'error': str(e)})
 
-           
-
+# Get book details by ISBN
 @app.route('/get_details_by_isbn/<isbn>', methods=['GET'])
 def get_book_details_by_isbn(isbn):
-    url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
-    response = requests.get(url)
-    data = response.json()
+    try:
+        url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
+        response = requests.get(url)
+        data = response.json()
 
-    if f"ISBN:{isbn}" in data:
-        book_data = data[f"ISBN:{isbn}"]
-        
-        title = book_data.get('title', 'N/A')
-        authors = ', '.join([author['name'] for author in book_data.get('authors', [])])
-        publishers = ', '.join([publisher['name'] for publisher in book_data.get('publishers', [])])
-        publish_date = book_data.get('publish_date', 'N/A')
-        
+        if f"ISBN:{isbn}" in data:
+            book_data = data[f"ISBN:{isbn}"]
+            
+            title = book_data.get('title', 'N/A')
+            authors = ', '.join([author['name'] for author in book_data.get('authors', [])])
+            publishers = ', '.join([publisher['name'] for publisher in book_data.get('publishers', [])])
+            publish_date = book_data.get('publish_date', 'N/A')
+            
+            return jsonify({
+                'titulo': title,
+                'autor': authors,
+                'editorial': publishers,
+                'fecha': publish_date
+            })
+        else:
+            return jsonify({"error": "No data found for the provided ISBN."}), 404
+    except Exception as e:
+        print(e)
         return jsonify({
-            'Title': title,
-            'Authors': authors,
-            'Publishers': publishers,
-            'Publish Date': publish_date
-        })
-    else:
-        return jsonify({"error": "No data found for the provided ISBN."}), 404
+                'titulo': '<Agregar título>',
+                'autor': '<Agregar autores>',
+                'editorial': '<Agregar editoriales>',
+                'fecha': '<Agregar fecha de publicación>'
+            })
 
+# OCR uploaded image
 def ocr_image(image_path):
     # Read the image using OpenCV
     img = cv2.imread(image_path)
@@ -130,21 +182,35 @@ def ocr_image(image_path):
     
     # Extract text from the image using pytesseract
     extracted_text = pytesseract.image_to_string(gray)
+    print("Extracted text: ", extracted_text)
     
     return extracted_text
 
+# Extract details from OCR text
 def extract_details(text):
+
     #get openai api key from openai_api_key.txt
     with open('openai_api_key.txt', 'r') as f:
         openai.api_key = f.read()
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-4-0613",
         messages=[
-            {"role":"system","content":"I will give you OCR-extracted text. generate a json of 'items' and get only isbn, cantidad, and precio. A typical price is 2.900,00"},
+            {"role":"system","content":"I will give you OCR-extracted text. generate an array of item objects and get only isbn, titulo, autor, cantidad (as int), and precio (as float). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"},
             {"role":"user","content":text},
-            {"role":"assistant","content":"here's the json:\n"}
+            {"role":"assistant","content":"here's the array:\n"}
         ])
-    return response.choices[0].message.content
+    response_text = response.choices[0].message.content
+    # json loads the string into a dictionary
+    print(response_text)
+    # get only the text from the first '[' to the last ']'
+    response_text = response_text[response_text.find('['):response_text.rfind(']')+1]
+    response_json = json.loads(response_text)
+
+    print(response_json)
+    return response_json
+
+    
+
 
 
 if __name__ == '__main__':
