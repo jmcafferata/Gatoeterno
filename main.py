@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, Blueprint
 import openai
 import pandas as pd
 from openai.embeddings_utils import get_embedding
@@ -17,16 +17,22 @@ import cv2
 import pytesseract
 
 
+
 app = Flask(__name__)
+# bp = Blueprint('audiont', __name__, template_folder='templates')
+
+# FOR DEBUG 👇
+bp = Blueprint('audiont', __name__, template_folder='templates', static_folder='static', static_url_path='/static')
+
 
 # Show index.html
-@app.route('/', methods=['GET'])
+@bp.route('/', methods=['GET'])
 def index():
 
     return render_template('index.html')
 
 # Add data to json file
-@app.route('/add_<dataName>', methods=['POST'])
+@bp.route('/add_<dataName>', methods=['POST'])
 def add_selection(dataName):
     try:
         data = request.get_json(force=True)
@@ -37,14 +43,14 @@ def add_selection(dataName):
         return jsonify({'status': 'error', 'error': str(e)})
 
 # Get data from json file
-@app.route('/get_<data>', methods=['GET'])
+@bp.route('/get_<data>', methods=['GET'])
 def get_data(data):
     with open(data+'.json', 'r', encoding='utf-8') as f:
         data = f.read()
     return data
 
 # Update data to json file
-@app.route('/update_<dataName>/<idName>/<id>/<property>/<value>', methods=['POST'])
+@bp.route('/update_<dataName>/<idName>/<id>/<property>/<value>', methods=['POST'])
 def update_data(dataName, idName,id, property, value):
     try:
         # Read the data
@@ -76,13 +82,13 @@ def update_data(dataName, idName,id, property, value):
         return jsonify({'status': 'error', 'error': str(e)})
     
 # Empty data from json file
-@app.route('/empty_<dataName>', methods=['POST'])
+@bp.route('/empty_<dataName>', methods=['POST'])
 def empty_data(dataName):
     with open(dataName+'.json', 'w', encoding='utf-8') as f:
         json.dump([], f)
     return jsonify({'status': 'success'})
 
-@app.route('/add_to_stock', methods=['POST'])
+@bp.route('/add_to_stock', methods=['POST'])
 def add_to_stock():
     try:
         # Read the selection
@@ -119,7 +125,7 @@ def add_to_stock():
         return jsonify({'status': 'error', 'error': str(e)})
 
 # Upload image to server
-@app.route('/upload_image', methods=['POST'])
+@bp.route('/upload_image', methods=['POST'])
 def upload_image():
     try:
         if 'file' not in request.files:
@@ -151,7 +157,7 @@ def upload_image():
         return jsonify({'status': 'error', 'error': str(e)})
 
 # Get book details by ISBN
-@app.route('/get_details_by_isbn/<isbn>', methods=['GET'])
+@bp.route('/get_details_by_isbn/<isbn>', methods=['GET'])
 def get_book_details_by_isbn(isbn):
     try:
         url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
@@ -234,4 +240,4 @@ def extract_details(text,prompt):
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)

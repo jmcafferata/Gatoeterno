@@ -1,1 +1,74 @@
-[]
+[
+    {
+        "isbn": "9789877194159",
+        "titulo": "LAINVENCION MUSICAL",
+        "autor": "MONJEAU FEDEI",
+        "editorial": "N/A",
+        "precio": 6900.0,
+        "cantidad": 35,
+        "consignacion": false
+    },
+    {
+        "isbn": "9789877194142",
+        "titulo": "LATERRAZA",
+        "autor": "GUIDO BEATRIZ",
+        "editorial": "N/A",
+        "precio": 6500.0,
+        "cantidad": 35,
+        "consignacion": false
+    },
+    {
+        "isbn": "9786071674913",
+        "titulo": "LAS CRONICAS DE PEPE FAROLES Y OTRA",
+        "autor": "VICENS JOSEFIN",
+        "editorial": "N/A",
+        "precio": 7400.0,
+        "cantidad": 36,
+        "consignacion": false
+    },
+    {
+        "isbn": "9786071670762",
+        "titulo": "LAS CONEXIONES DEL MUNDO Y EL ATLAN",
+        "autor": "CARMAGNANI M",
+        "editorial": "N/A",
+        "precio": 5100.0,
+        "cantidad": "N/A",
+        "consignacion": false
+    },
+    {
+        "isbn": "9786071675552",
+        "titulo": "BENDITAS GUERRAS",
+        "autor": "BARBERO ALESS",
+        "editorial": "N/A",
+        "precio": 2900.0,
+        "cantidad": "N/A",
+        "consignacion": false
+    },
+    {
+        "isbn": "9789681615079",
+        "titulo": "LASOCIEDAD ROMANA",
+        "autor": "FRIEDLEANDER",
+        "editorial": "N/A",
+        "precio": 9900.0,
+        "cantidad": "N/A",
+        "consignacion": false
+    },
+    {
+        "isbn": "9786071671929",
+        "titulo": "EL HOMBRE QUE FUE JUEVES",
+        "autor": "CHESTERTON GI",
+        "editorial": "N/A",
+        "precio": 2500.0,
+        "cantidad": "N/A",
+        "consignacion": false
+    },
+    {
+        "isbn": "9786071675446",
+        "titulo": "CIUDADES A LA DERIVA",
+        "autor": "TSIRKAS STRAT",
+        "editorial": "N/A",
+        "precio": 2900.0,
+        "cantidad": "N/A",
+        "consignacion": false
+    }
+]
