@@ -72,6 +72,7 @@
       <div id="modules">
         <div class="module" name="Funciones">
           <!-- Botón de Subir factura (jpg, png, jpeg)-->
+          <input type="text" id="prompt" placeholder="Pedido (opcional)"  style="display: none;">
           <button
             id="upload-btn"
             onclick="document.getElementById('upload').click()"
@@ -84,12 +85,6 @@
             accept="image/*"
             style="display: none"
           />
-          <!-- Botón de Historial-->
-          <button id="history">Historial</button>
-          <!-- Botón de agregar a stock manual-->
-          <button id="manual">Agregar a stock</button>
-          <!-- Botón de aumentar precios -->
-          <button id="increase">Aumentar precios</button>
         </div>
         <div class="module" name="Búsqueda">
           <!-- Barra de búsqueda -->
@@ -232,9 +227,14 @@
         document.getElementById("image-container").appendChild(image);
         document.getElementById("image-container").style.display = "block";
 
+        // get text from id=prompt value
+        let prompt = document.getElementById("prompt").value;
+
         // upload the image to the server
         let formData = new FormData();
         formData.append("file", this.files[0]);
+        formData.append("prompt", prompt);
+
         fetch("/upload_image", {
           method: "POST",
           body: formData,

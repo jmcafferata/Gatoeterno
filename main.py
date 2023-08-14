@@ -132,9 +132,12 @@ def upload_image():
         
         image_path = 'image.jpeg'
         image.save(image_path)
+
+        # get prompt from form
+        prompt = request.form['prompt']
         
         extracted_text = ocr_image(image_path)
-        items_json = extract_details(extracted_text)
+        items_json = extract_details(extracted_text, prompt)
         # for each item, add the property "consignacion" as false
         for item in items_json:
             item['consignacion'] = False
@@ -195,15 +198,24 @@ def ocr_image(image_path):
     return extracted_text
 
 # Extract details from OCR text
-def extract_details(text):
+def extract_details(text,prompt):
 
     #get openai api key from openai_api_key.txt
     with open('openai_api_key.txt', 'r') as f:
         openai.api_key = f.read()
+    
+    default_prompt = "generate an array of item objects and get only isbn, titulo, autor, editorial, precio (as float) and  cantidad (as int). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"
+
+    print("Prompt: ", prompt)
+
+    # if prompt is empty, use default prompt
+    if prompt == "":
+        prompt = default_prompt
+
     response = openai.ChatCompletion.create(
         model="gpt-4-0613",
         messages=[
-            {"role":"system","content":"I will give you OCR-extracted text. generate an array of item objects and get only isbn, titulo, autor, editorial, cantidad (as int), and precio (as float). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"},
+            {"role":"system","content":"Te voy a dar texto extraído con OCR. Realizar la siguiente acción: "+prompt},
             {"role":"user","content":text},
             {"role":"assistant","content":"here's the array:\n"}
         ])
