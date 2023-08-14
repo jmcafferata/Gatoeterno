@@ -1,20 +1,18 @@
 [
     {
+        "cantidad": 15,
         "isbn": "9780747532699",
         "titulo": "Harry Potter and the Philosopher's Stone",
         "autor": "J.K. Rowling",
         "editorial": "Bloomsbury",
-        "year": "1997",
         "precio": "20.99",
-        "consignacion": true,
-        "cantidad": 15
+        "consignacion": false
     },
     {
         "isbn": "9780451450524",
         "titulo": "The Eye of the World",
         "autor": "Robert Jordan",
         "editorial": "Tor Books",
-        "year": "1990",
         "precio": "24.99",
         "consignacion": false,
         "cantidad": 5
@@ -24,9 +22,8 @@
         "titulo": "1984",
         "autor": "George Orwell",
         "editorial": "Penguin Classics",
-        "year": "1949",
         "precio": "15.99",
-        "consignacion": true,
+        "consignacion": false,
         "cantidad": 15
     },
     {
@@ -34,19 +31,8 @@
         "titulo": "The Stand",
         "autor": "Stephen King",
         "editorial": "Doubleday",
-        "year": "1978",
         "precio": "28.99",
         "consignacion": false,
         "cantidad": 3
-    },
-    {
-        "isbn": "9780613376488",
-        "cantidad": 2,
-        "titulo": "Uvas De LA Ira/Grapes of Wrath",
-        "autor": "John Steinbeck",
-        "editorial": "Tandem Library",
-        "fecha": "January 2003",
-        "precio": 0,
-        "consignacion": false
     }
 ]

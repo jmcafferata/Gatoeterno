@@ -1,65 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <title>Gateoeterno</title>
-    <!-- Un chatbot para compartir información sobre algo -->
     <link rel="stylesheet" href="static/style.css" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+      *,
+      html {
+        margin: 0;
+        padding: 0;
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+      }
+      body {
+        background-color: #32609e;
+      }
+      tr:nth-child(even) {
+        background-color: #dfe3e8;
+      }
+      td {
+        padding: 4px;
+      }
+      #app-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 1200px;
+        margin: auto;
+      }
+
+      #logo {
+        text-align: center;
+        padding: 80px 0 64px 0;
+      }
+      .module {
+        background-color: #eff2f7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 0px 10px 16px 10px;
+        overflow-x: scroll;
+      }
+      /* remove scrollbar */
+      .module::-webkit-scrollbar {
+        display: none;
+      }
+      .module-name {
+        font-weight: 900;
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+        padding: 0px 0px 12px 4px;
+      }
+      #image-container {
+        overflow: scroll;
+        max-height: 300px;
+        display: none;
+      }
+      table {
+        margin-bottom: 12px;
+      }
+      button {
+        font-size: 14px;
+        padding: 4px;
+      }
+    </style>
   </head>
   <body>
-    <div id="logo">
-      <img src="static/logo.png" alt="logo" />
-    </div>
-    <div class="module" name="Búsqueda">
-      <!-- Barra de búsqueda -->
-      <input type="text" id="search" placeholder="Buscar..." />
-      <!-- Lista de resultados -->
-      <table id="results"></table>
-    </div>
-    <div class="module" name="Carrito">
-      <!-- Selección de artículos -->
-      <table id="selection"></table>
-      <!-- Botón de Agregar a stock -->
-      <button id="add">Agregar a stock</button>
-      <!-- Botón de Registrar venta -->
-      <button id="sell">Registrar venta</button>
-      <!-- Botón de Borrar selección -->
-      <button id="empty">Borrar selección</button>
-    </div>
-    <div class="module" name="Funciones">
-      <!-- Contenedor de imagen -->
+    <div id="app-container">
+      <div id="logo">
+        <img src="static/logo.png" alt="logo" />
+      </div>
+      <div id="modules">
+        <div class="module" name="Funciones">
+          <!-- Botón de Subir factura (jpg, png, jpeg)-->
+          <button
+            id="upload-btn"
+            onclick="document.getElementById('upload').click()"
+          >
+            Subir factura
+          </button>
+          <input
+            type="file"
+            id="upload"
+            accept="image/*"
+            style="display: none"
+          />
+          <!-- Botón de Historial-->
+          <button id="history">Historial</button>
+          <!-- Botón de agregar a stock manual-->
+          <button id="manual">Agregar a stock</button>
+          <!-- Botón de aumentar precios -->
+          <button id="increase">Aumentar precios</button>
+        </div>
+        <div class="module" name="Búsqueda">
+          <!-- Barra de búsqueda -->
+          <input type="text" id="search" placeholder="Buscar..." />
+          <!-- Lista de resultados -->
+          <table id="results"></table>
+        </div>
+        <div class="module" name="Carrito">
+          <!-- Contenedor de imagen -->
 
-      <button id="close-image" style="display: none">Borrar imagen</button>
-      <div id="image-container"></div>
-      <!-- Botón de Subir factura (jpg, png, jpeg)-->
-      <button
-        id="upload-btn"
-        onclick="document.getElementById('upload').click()"
-      >
-        Subir factura
-      </button>
-      <input type="file" id="upload" accept="image/*" style="display: none" />
-      <!-- Botón de Historial-->
-      <button id="history">Historial</button>
-      <!-- Botón de agregar a stock manual-->
-      <button id="manual">Agregar a stock</button>
-      <!-- Botón de aumentar precios -->
-      <button id="increase">Aumentar precios</button>
-    </div>
+          <button id="close-image" style="display: none">Borrar imagen</button>
+          <div id="image-container"></div>
+          <!-- Selección de artículos -->
+          <table id="selection"></table>
+          <!-- Botón de Agregar a stock -->
+          <button id="add">Agregar a stock</button>
+          <!-- Botón de Registrar venta -->
+          <button id="sell">Registrar venta</button>
+          <!-- Botón de Borrar selección -->
+          <button id="empty">Borrar selección</button>
+        </div>
 
-    <div class="module" name="Registro">
-      <!-- Log -->
-      <ul id="log"></ul>
-    </div>
-    <div class="module" name="Stock">
-      <!-- Listado de stock -->
-      <table id="stock"></table>
+        <div class="module" name="Registro">
+          <!-- Log -->
+          <ul id="log"></ul>
+        </div>
+        <div class="module" name="Stock">
+          <!-- Listado de stock -->
+          <table id="stock"></table>
+        </div>
+      </div>
     </div>
 
     <script type="text/javascript">
@@ -154,7 +215,7 @@
 
       // When user adds a file, upload it to the server
       document.getElementById("upload").addEventListener("change", function () {
-        logAction("Subiendo imagen");
+        logAction("Subiendo imagen... (puede tardar unos 30 segundos)");
         // check if the file is an image
         if (!this.files[0].type.match(/image.*/)) {
           alert("No es una imagen");
@@ -262,7 +323,6 @@
       // won a td keyup
       document.addEventListener("keyup", function (e) {
         if (e.target && e.target.nodeName == "TD") {
-                   
           // get the table name from the id of the table
           let dataName = e.target.parentElement.parentElement.parentElement.id;
           // get the isbn from data-id in cell
@@ -276,6 +336,23 @@
           updateData(dataName, idName, id, property, value);
         }
       });
+
+      // when checkbox changes (if input type is checkbox)
+      document.addEventListener("change", function (e) {
+        if (e.target && e.target.nodeName == "INPUT") {
+          // get the table name from the id of the table
+          let dataName = e.target.parentElement.parentElement.parentElement.parentElement.id;
+          // get the isbn from data-id in cell
+          let id = e.target.parentElement.getAttribute("data-id");
+          // get the property from the data-property in cell
+          let property = e.target.parentElement.getAttribute("data-property");
+          // get the updated value in boolean
+          let value = e.target.checked;
+          // update the data according to the table id (it could be anything)
+          updateData(dataName, idName, id, property, value);
+        }
+      });
+
 
       function updateData(dataName, idName, id, property, value) {
         // update the server with the new value
@@ -416,36 +493,5 @@
         }
       }
     </script>
-
-    <style>
-      * {
-        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
-      }
-      body {
-        background-color: #32609e;
-      }
-
-      #logo {
-        width: 100%;
-        text-align: center;
-        padding: 64px 0;
-      }
-      .module {
-        background-color: #eff2f7;
-        border-radius: 5px;
-        padding: 10px;
-        margin: 10px;
-      }
-      .module-name {
-        font-weight: 900;
-        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
-        padding: 0px 0 12px 0;
-      }
-      #image-container {
-        overflow: scroll;
-        max-height: 300px;
-        display: none;
-      }
-    </style>
   </body>
 </html>

@@ -55,6 +55,14 @@ def update_data(dataName, idName,id, property, value):
         found = next((b for b in data if b[idName] == id), None)
 
         if found:
+            # if the property is a number, keep the value as number, not string
+            property_type = type(found[property])
+            if property_type == int or property_type == float:
+                value = property_type(value)
+            # if it's boolean or a string that says true of false, convert the string to boolean
+            elif property_type == bool or (property_type == str and (value == 'true' or value == 'false')):
+                value = True if value == 'true' else False
+
             found[property] = value
         else:
             return jsonify({'status': 'error', 'error': 'Book not found in the data.'})
@@ -195,7 +203,7 @@ def extract_details(text):
     response = openai.ChatCompletion.create(
         model="gpt-4-0613",
         messages=[
-            {"role":"system","content":"I will give you OCR-extracted text. generate an array of item objects and get only isbn, titulo, autor, cantidad (as int), and precio (as float). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"},
+            {"role":"system","content":"I will give you OCR-extracted text. generate an array of item objects and get only isbn, titulo, autor, editorial, cantidad (as int), and precio (as float). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"},
             {"role":"user","content":text},
             {"role":"assistant","content":"here's the array:\n"}
         ])
