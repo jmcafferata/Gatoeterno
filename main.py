@@ -203,7 +203,7 @@ def extract_details(text):
     response = openai.ChatCompletion.create(
         model="gpt-4-0613",
         messages=[
-            {"role":"system","content":"I will give you OCR-extracted text. generate an array of item objects and get only isbn, titulo, autor, editorial, cantidad (as int), and precio (as float). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"},
+            {"role":"system","content":"I will give you OCR-extracted text. identify the main columns and generate an array of item objects "},
             {"role":"user","content":text},
             {"role":"assistant","content":"here's the array:\n"}
         ])
