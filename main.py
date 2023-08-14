@@ -1,14 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory, Blueprint
 import openai
-import pandas as pd
-from openai.embeddings_utils import get_embedding
-import numpy as np
-from openai.embeddings_utils import cosine_similarity
-from pathlib import Path
-import os
-from datetime import datetime
-from io import StringIO
-from ast import literal_eval
 import pytz
 import requests
 timezone = pytz.timezone('America/Argentina/Buenos_Aires')
