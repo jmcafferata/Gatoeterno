@@ -7,23 +7,29 @@ import json
 import cv2
 import pytesseract
 
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+import os
+import pickle
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
 app = Flask(__name__)
-# bp = Blueprint('audiont', __name__, template_folder='templates')
-
-# FOR DEBUG 👇
-bp = Blueprint('audiont', __name__, template_folder='templates', static_folder='static', static_url_path='/static')
 
 
 # Show index.html
-@bp.route('/', methods=['GET'])
+@app.route('/', methods=['GET'])
 def index():
 
     return render_template('index.html')
 
 # Add data to json file
-@bp.route('/add_<dataName>', methods=['POST'])
+@app.route('/add_<dataName>', methods=['POST'])
 def add_selection(dataName):
     try:
         data = request.get_json(force=True)
@@ -34,14 +40,14 @@ def add_selection(dataName):
         return jsonify({'status': 'error', 'error': str(e)})
 
 # Get data from json file
-@bp.route('/get_<data>', methods=['GET'])
+@app.route('/get_<data>', methods=['GET'])
 def get_data(data):
     with open(data+'.json', 'r', encoding='utf-8') as f:
         data = f.read()
     return data
 
 # Update data to json file
-@bp.route('/update_<dataName>/<idName>/<id>/<property>/<value>', methods=['POST'])
+@app.route('/update_<dataName>/<idName>/<id>/<property>/<value>', methods=['POST'])
 def update_data(dataName, idName,id, property, value):
     try:
         # Read the data
@@ -73,13 +79,13 @@ def update_data(dataName, idName,id, property, value):
         return jsonify({'status': 'error', 'error': str(e)})
     
 # Empty data from json file
-@bp.route('/empty_<dataName>', methods=['POST'])
+@app.route('/empty_<dataName>', methods=['POST'])
 def empty_data(dataName):
     with open(dataName+'.json', 'w', encoding='utf-8') as f:
         json.dump([], f)
     return jsonify({'status': 'success'})
 
-@bp.route('/add_to_stock', methods=['POST'])
+@app.route('/add_to_stock', methods=['POST'])
 def add_to_stock():
     try:
         # Read the selection
@@ -116,39 +122,61 @@ def add_to_stock():
         return jsonify({'status': 'error', 'error': str(e)})
 
 # Upload image to server
-@bp.route('/upload_image', methods=['POST'])
+@app.route('/upload_image', methods=['POST'])
 def upload_image():
     try:
         if 'file' not in request.files:
             return jsonify({'status': 'error', 'message': 'No file part in the request.'}), 400
         image = request.files['file']
         
-        # Check if the file is empty
         if image.filename == '':
             return jsonify({'status': 'error', 'message': 'No selected file.'}), 400
         
         image_path = 'image.jpeg'
         image.save(image_path)
 
-        # get prompt from form
         prompt = request.form['prompt']
         
         extracted_text = ocr_image(image_path)
+        print("Extracted Text: ", extracted_text)  # Debug print
+
         items_json = extract_details(extracted_text, prompt)
-        # for each item, add the property "consignacion" as false
+        print("Items JSON: ", items_json)  # Debug print
+
         for item in items_json:
             item['consignacion'] = False
- 
-        # replace selection.json with items_json
+
         with open('selection.json', 'w', encoding='utf-8') as f:
             json.dump(items_json, f, ensure_ascii=False, indent=4)
-        return jsonify({'status': 'success', 'message': 'Image uploaded successfully.'})
+
+        # Use service account for authentication
+        SERVICE_ACCOUNT_FILE = 'credentials.json'  # Update with your service account file path
+        SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+        creds = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
+        service = build('sheets', 'v4', credentials=creds)
+
+        sheet = service.spreadsheets()
+        spreadsheet_id = '1RgeJ0qgHVxFMpqG4htsQx_kyaisFK8geohaolrR_ZYE'
+        range_name = 'Sheet1'
+
+        values = [list(item.values()) for item in items_json]
+        body = {'values': values}
+        result = sheet.values().append(spreadsheetId=spreadsheet_id, range=range_name,
+                                       valueInputOption='RAW', body=body).execute()
+
+        print("Google Sheets API Result: ", result)  # Debug print
+
+        return jsonify({'status': 'success', 'message': 'Image uploaded and spreadsheet updated successfully.'})
     except Exception as e:
-        print(e)
+        print("Error: ", e)  # Debug print
         return jsonify({'status': 'error', 'error': str(e)})
 
+
 # Get book details by ISBN
-@bp.route('/get_details_by_isbn/<isbn>', methods=['GET'])
+@app.route('/get_details_by_isbn/<isbn>', methods=['GET'])
 def get_book_details_by_isbn(isbn):
     try:
         url = f"https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
@@ -201,7 +229,7 @@ def extract_details(text,prompt):
     with open('openai_api_key.txt', 'r') as f:
         openai.api_key = f.read()
     
-    default_prompt = "generate an array of item objects and get only isbn, titulo, autor, editorial, precio (as float) and  cantidad (as int). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 2900.00"
+    default_prompt = "generate an array of item objects and get only isbn, titulo, autor, editorial, precio unit. (as float) and  cantidad (as int). if some of the fields is absent replace with N/A, and clean up the text so it looks nice. A typical price is 6000.00"
 
     print("Prompt: ", prompt)
 
