@@ -92,19 +92,19 @@
           <!-- Lista de resultados -->
           <table id="results"></table>
         </div>
-        <div class="module" name="Carrito">
+        <div class="module" name="Imagen">
           <!-- Contenedor de imagen -->
 
           <button id="close-image" style="display: none">Borrar imagen</button>
           <div id="image-container"></div>
           <!-- Selección de artículos -->
-          <table id="selection"></table>
+          <!-- <table id="selection"></table> -->
           <!-- Botón de Agregar a stock -->
-          <button id="add">Agregar a stock</button>
+          <!-- <button id="add">Agregar a stock</button> -->
           <!-- Botón de Registrar venta -->
-          <button id="sell">Registrar venta</button>
+          <!-- <button id="sell">Registrar venta</button> -->
           <!-- Botón de Borrar selección -->
-          <button id="empty">Borrar selección</button>
+          <!-- <button id="empty">Borrar selección</button> -->
         </div>
 
         <div class="module" name="Registro">
@@ -117,6 +117,19 @@
         </div>
       </div>
     </div>
+
+    <script>
+      // hide modules with names Búsqueda and Stock
+      let modules = document.getElementsByClassName("module");
+      for (let i = 0; i < modules.length; i++) {
+        if (
+          modules[i].getAttribute("name") == "Búsqueda" ||
+          modules[i].getAttribute("name") == "Stock"
+        ) {
+          modules[i].style.display = "none";
+        }
+      }
+    </script>
 
     <script type="text/javascript">
       // CONFIG

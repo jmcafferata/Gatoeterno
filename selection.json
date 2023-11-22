@@ -4,7 +4,7 @@
         "titulo": "HISTORIAS DE DIVAN. DIEZ REL",
         "autor": "ROLON GABRIEL",
         "editorial": "N/A",
-        "precio_unit": 7500.0,
+        "precio unit": 7500.0,
         "cantidad": 1,
         "consignacion": false
     },
@@ -13,7 +13,7 @@
         "titulo": "COMO ME ENAMORE DE NICOLAS C",
         "autor": "QUEVEDO CARLA",
         "editorial": "N/A",
-        "precio_unit": 8999.0,
+        "precio unit": 8999.0,
         "cantidad": 1,
         "consignacion": false
     },
@@ -22,7 +22,7 @@
         "titulo": "EL DUELO",
         "autor": "ROLON GABRIEL",
         "editorial": "N/A",
-        "precio_unit": 7500.0,
+        "precio unit": 7500.0,
         "cantidad": 2,
         "consignacion": false
     },
@@ -31,7 +31,7 @@
         "titulo": "POR QUE VOLVIAS CADA VERANO",
         "autor": "LOPEZ PEIRO BE",
         "editorial": "N/A",
-        "precio_unit": 4899.0,
+        "precio unit": 4899.0,
         "cantidad": 1,
         "consignacion": false
     },
@@ -40,7 +40,7 @@
         "titulo": "LA ERA DE LA ANSIEDAD",
         "autor": "PALACIO ROBERT",
         "editorial": "N/A",
-        "precio_unit": 8200.0,
+        "precio unit": 8200.0,
         "cantidad": 1,
         "consignacion": false
     }
